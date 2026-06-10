@@ -1,0 +1,2 @@
+sbx_genomad:
+  genomad_db: '/mnt/isilon/hvp/dbs/genomad_db'
