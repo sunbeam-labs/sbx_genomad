@@ -40,10 +40,10 @@ rule genomad:
         "envs/genomad_env.yml"
     container:
         f"docker://sunbeamlabs/sbx_genomad:{SBX_GENOMAD_VERSION}-cenote-taker"
+    threads: 8
     resources:
         mem_mb=96000,
         runtime=1440,
-        threads=8
     shell:
         """
         SAMPLE={params.sample}
