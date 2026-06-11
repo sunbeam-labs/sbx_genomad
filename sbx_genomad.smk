@@ -23,15 +23,15 @@ rule all_genomad:
         ),
         VIRUS_FP / "genomad" / "genomad_all_contigs_virus_summary.tsv",
 
-rule genomad:
+rule run_genomad:
     input:
         contigs=ASSEMBLY_FP / "megahit" / "{sample}_asm" / "final.contigs.fa",
     output:
         summary=VIRUS_FP / "genomad" / "{sample}" / "final.contigs_summary" / "final.contigs_virus_summary.tsv",
     benchmark:
-        BENCHMARK_FP / "genomad_{sample}.tsv"
+        BENCHMARK_FP / "run_genomad_{sample}.tsv"
     log:
-        LOG_FP / "genomad_{sample}.log",
+        LOG_FP / "run_genomad_{sample}.log",
     params:
         out_dir=str(VIRUS_FP / "genomad"),
         sample="{sample}",
@@ -40,10 +40,11 @@ rule genomad:
         "envs/genomad_env.yml"
     container:
         f"docker://sunbeamlabs/sbx_genomad:{SBX_GENOMAD_VERSION}-cenote-taker"
+    threads: 8
     resources:
-        mem_mb=96000,
+        mem_mb=32000,
         runtime=1440,
-        threads=8
+        cpus_per_task=8,
     shell:
         """
         SAMPLE={params.sample}
@@ -61,7 +62,7 @@ rule genomad:
         fi
 
         cd {params.out_dir}
-        genomad end-to-end --cleanup {input.contigs} {params.sample} {params.db_fp} --threads {resources.threads} >> {log} 2>&1
+        genomad end-to-end --cleanup {input.contigs} {params.sample} {params.db_fp} --threads {threads} >> {log} 2>&1
         """
 
 rule genomad_fmt:
@@ -77,10 +78,10 @@ rule genomad_fmt:
         "envs/genomad_env.yml"
     container:
         f"docker://sunbeamlabs/sbx_genomad:{SBX_GENOMAD_VERSION}-cenote-taker"
+    threads: 1
     resources:
         mem_mb=1000,
         runtime=60,
-        threads=1
     shell:
         """
         awk -v new_col_name="sample" -v new_col={params.sample} '
@@ -98,6 +99,7 @@ rule genomad_summarize:
         ),
     output:
         VIRUS_FP / "genomad" / "genomad_all_contigs_virus_summary.tsv",
+    threads: 1
     conda:
        "envs/genomad_env.yml"
     container:
