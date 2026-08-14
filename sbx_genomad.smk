@@ -249,8 +249,9 @@ rule genomad_vOTU_table:
         """ 
         # grab mapped reads and reference length for vOTU table
         paste {input.stats} | awk '{{printf "%s\t%s", $1, $2; for(i=3;i<=NF;i+=4) printf "\t%s", $i; print ""}}' > {output.otutab} 2>> {log}
-        # grab the vOTU representative sequence taxonomic assignments by contig ID and put them in their own file
-        head -n1 {input.summary} > {output.taxtab}
-        grep -F "$(awk '{{print $1 "\\t"}}' {output.otutab})" {input.summary} >> {output.taxtab} 2>> {log}
+        # Join vOTU table to the vOTU representative sequence taxonomic assignments by contig ID (first column) and put them in their own file
+        #head -n1 {input.summary} > {output.taxtab}
+        #grep -F "$(awk '{{print $1 "\\t"}}' {output.otutab})" {input.summary} >> {output.taxtab} 2>> {log} # this only works for small tables
+        awk 'BEGIN {{FS=OFS="\\t"}} NR==FNR {{if (NR==1) {{h2=$0; next}}; right[$1]=$0; next}} FNR==1 {{print $0, h2; next}} {{if ($1 in right) {{print $0, right[$1]}} else {{print $0, ""}}}}' {input.summary} {output.otutab} > {output.taxtab} 2>> {log}
         """
 
